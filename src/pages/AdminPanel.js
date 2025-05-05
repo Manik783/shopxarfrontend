@@ -15,7 +15,12 @@ const AdminPanel = () => {
   const [sort, setSort] = useState('desc');
   const [stats, setStats] = useState({});
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 1,
+    currentPage: 1,
+    pages: [1]
+  });
   
   const fetchRequests = async () => {
     try {
@@ -34,11 +39,16 @@ const AdminPanel = () => {
         throw new Error(response?.message || 'Failed to load requests');
       }
       
-      const { requests = [], pagination = {}, stats = {} } = response.data || {};
+      const { requests: fetchedRequests = [], pagination: paginationData = {}, stats: statsData = {} } = response.data || {};
       
-      setRequests(requests);
-      setTotalPages(pagination.pages || 1);
-      setStats(stats);
+      setRequests(fetchedRequests);
+      setPagination({
+        total: paginationData.total || 0,
+        totalPages: paginationData.totalPages || 1,
+        currentPage: paginationData.currentPage || page,
+        pages: paginationData.pages || [1]
+      });
+      setStats(statsData);
     } catch (error) {
       console.error('Error fetching requests:', error);
       setError(error.message || 'Failed to load requests. Please try again.');
@@ -90,28 +100,53 @@ const AdminPanel = () => {
   
   // Render pagination controls
   const renderPagination = () => {
-    if (!requests.length) return null;
+    if (!requests.length || pagination.totalPages <= 1) return null;
+    
+    // Custom styles for pagination
+    const paginationStyles = {
+      item: {
+        backgroundColor: '#111111',
+        color: '#FFF4E2',
+        borderColor: '#647881'
+      },
+      active: {
+        backgroundColor: '#647881',
+        color: '#FFF4E2',
+        borderColor: '#647881'
+      }
+    };
     
     return (
-      <Pagination className="justify-content-center mt-4">
-        <Pagination.Prev
-          onClick={() => setPage(p => Math.max(1, p - 1))}
-          disabled={page === 1}
-        />
-        {page > 1 && <Pagination.Item onClick={() => setPage(1)}>1</Pagination.Item>}
-        {page > 2 && <Pagination.Ellipsis />}
-        <Pagination.Item active>{page}</Pagination.Item>
-        {page < totalPages - 1 && <Pagination.Ellipsis />}
-        {page < totalPages && (
-          <Pagination.Item onClick={() => setPage(totalPages)}>
-            {totalPages}
-          </Pagination.Item>
-        )}
-        <Pagination.Next
-          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-          disabled={page >= totalPages}
-        />
-      </Pagination>
+      <div className="mt-4">
+        <Pagination className="justify-content-center">
+          <Pagination.Prev
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            style={paginationStyles.item}
+          />
+          
+          {pagination.pages && pagination.pages.map(p => (
+            <Pagination.Item
+              key={p}
+              active={p === page}
+              onClick={() => setPage(p)}
+              style={p === page ? paginationStyles.active : paginationStyles.item}
+            >
+              {p}
+            </Pagination.Item>
+          ))}
+          
+          <Pagination.Next
+            onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+            disabled={page >= pagination.totalPages}
+            style={paginationStyles.item}
+          />
+        </Pagination>
+        
+        <div className="text-center mt-2" style={{ color: '#FFF4E2' }}>
+          Page {page} of {pagination.totalPages}
+        </div>
+      </div>
     );
   };
   
