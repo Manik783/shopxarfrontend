@@ -43,11 +43,19 @@ const AdminPanel = () => {
         throw new Error(response?.message || 'Failed to load requests');
       }
       
+      // Calculate proper pagination based on total requests (10 per page)
+      let calculatedTotalPages = 1;
+      let calculatedPages = [1];
+      let totalRequests = 0;
+      
       // Create default pagination if not provided by backend
-      let paginationData = { pages: [1], total: 0, totalPages: 1, currentPage: 1 };
+      let paginationData = { total: 0, totalPages: 1, currentPage: 1 };
       
       if (response.data) {
         const { requests: fetchedRequests = [], stats: statsData = {} } = response.data;
+        
+        // Get total requests count from stats
+        totalRequests = statsData.total || fetchedRequests.length;
         
         // Extract pagination data - handle both structures
         if (response.data.pagination) {
@@ -56,21 +64,22 @@ const AdminPanel = () => {
           paginationData = response.pagination;
         }
         
-        // If pages array is not provided, create it
-        if (!paginationData.pages || !Array.isArray(paginationData.pages)) {
-          const totalPages = paginationData.totalPages || 1;
-          paginationData.pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-        }
+        // Calculate total pages based on total requests (10 per page)
+        calculatedTotalPages = Math.ceil(totalRequests / 10);
         
-        console.log('Pagination data:', paginationData);
-        console.log('Found', fetchedRequests.length, 'requests');
+        // Generate page numbers based on calculated total pages
+        calculatedPages = Array.from({ length: calculatedTotalPages }, (_, i) => i + 1);
+        
+        console.log('Total requests:', totalRequests);
+        console.log('Calculated total pages:', calculatedTotalPages);
+        console.log('Generated pages:', calculatedPages);
         
         setRequests(fetchedRequests);
         setPagination({
-          total: paginationData.total || 0,
-          totalPages: paginationData.totalPages || 1,
+          total: totalRequests,
+          totalPages: calculatedTotalPages,
           currentPage: paginationData.currentPage || page,
-          pages: paginationData.pages
+          pages: calculatedPages
         });
         setStats(statsData);
       }
@@ -125,22 +134,19 @@ const AdminPanel = () => {
   
   // Render pagination controls
   const renderPagination = () => {
-    // Generate page numbers manually if not provided by backend
-    let pages = pagination.pages;
-    if (!pages || !pages.length) {
-      const totalPages = pagination.totalPages || 1;
-      pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
+    // Generate page numbers based on stats.total (10 requests per page)
+    const totalPages = pagination.totalPages || 1;
+    const pages = pagination.pages || [1];
     
     // Don't render pagination if there's only one page or no requests
-    if (!requests.length || (pagination.totalPages <= 1 && pages.length <= 1)) {
-      console.log('No pagination shown: requests length =', requests.length, 'totalPages =', pagination.totalPages);
+    if (!requests.length || totalPages <= 1) {
+      console.log('No pagination shown: requests length =', requests.length, 'totalPages =', totalPages);
       return null;
     }
     
-    console.log('Rendering pagination:', pages);
+    console.log('Rendering pagination with pages:', pages);
     
-    // Custom styles for pagination
+    // Custom styles for pagination - updated to ensure dark colors
     const paginationStyles = {
       item: {
         backgroundColor: '#111111',
@@ -175,14 +181,14 @@ const AdminPanel = () => {
           ))}
           
           <Pagination.Next
-            onClick={() => setPage(p => Math.min(pagination.totalPages || Math.max(...pages), p + 1))}
-            disabled={page >= (pagination.totalPages || Math.max(...pages))}
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
             style={paginationStyles.item}
           />
         </Pagination>
         
         <div className="text-center mt-2" style={{ color: '#FFF4E2' }}>
-          Page {page} of {pagination.totalPages || pages.length}
+          Page {page} of {totalPages}
         </div>
       </div>
     );
@@ -370,44 +376,7 @@ const AdminPanel = () => {
               </Table>
             </div>
             
-            {/* Always force a pagination with at least 5 pages for testing */}
-            {pagination.totalPages <= 1 && requests.length > 0 ? (
-              <div className="mt-4">
-                <Pagination className="justify-content-center">
-                  <Pagination.Prev
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    style={{ backgroundColor: '#111111', color: '#FFF4E2', borderColor: '#647881' }}
-                  />
-                  
-                  {[1, 2, 3, 4, 5].map(p => (
-                    <Pagination.Item
-                      key={p}
-                      active={p === page}
-                      onClick={() => setPage(p)}
-                      style={p === page 
-                        ? { backgroundColor: '#647881', color: '#FFF4E2', borderColor: '#647881' }
-                        : { backgroundColor: '#111111', color: '#FFF4E2', borderColor: '#647881' }
-                      }
-                    >
-                      {p}
-                    </Pagination.Item>
-                  ))}
-                  
-                  <Pagination.Next
-                    onClick={() => setPage(p => Math.min(5, p + 1))}
-                    disabled={page >= 5}
-                    style={{ backgroundColor: '#111111', color: '#FFF4E2', borderColor: '#647881' }}
-                  />
-                </Pagination>
-                
-                <div className="text-center mt-2" style={{ color: '#FFF4E2' }}>
-                  Page {page} of 5
-                </div>
-              </div>
-            ) : (
-              renderPagination()
-            )}
+            {renderPagination()}
           </Card.Body>
         </Card>
       </ErrorBoundary>
