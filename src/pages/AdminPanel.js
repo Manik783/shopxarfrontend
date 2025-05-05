@@ -30,11 +30,11 @@ const AdminPanel = () => {
         page
       });
       
-      if (!response?.data?.success) {
-        throw new Error(response?.data?.message || 'Failed to load requests');
+      if (!response?.success) {
+        throw new Error(response?.message || 'Failed to load requests');
       }
       
-      const { requests = [], pagination = {}, stats = {} } = response.data.data || {};
+      const { requests = [], pagination = {}, stats = {} } = response.data || {};
       
       setRequests(requests);
       setTotalPages(pagination.pages || 1);
