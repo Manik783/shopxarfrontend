@@ -146,46 +146,108 @@ const AdminPanel = () => {
     
     console.log('Rendering pagination with pages:', pages);
     
-    // Custom styles for pagination - updated to ensure dark colors
-    const paginationStyles = {
+    // Custom styles for pagination with !important to override Bootstrap defaults
+    const customPaginationStyle = {
+      container: {
+        display: 'flex',
+        justifyContent: 'center',
+        marginTop: '20px'
+      },
+      ul: {
+        display: 'flex',
+        padding: 0,
+        margin: 0,
+        listStyle: 'none'
+      },
       item: {
+        margin: '0 2px',
+        cursor: 'pointer',
         backgroundColor: '#111111',
         color: '#FFF4E2',
-        borderColor: '#647881'
+        border: '1px solid #647881',
+        padding: '6px 12px',
+        borderRadius: '4px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textDecoration: 'none'
       },
-      active: {
+      activeItem: {
+        margin: '0 2px',
+        cursor: 'pointer',
         backgroundColor: '#647881',
         color: '#FFF4E2',
-        borderColor: '#647881'
+        border: '1px solid #647881',
+        padding: '6px 12px',
+        borderRadius: '4px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textDecoration: 'none'
+      },
+      disabledItem: {
+        margin: '0 2px',
+        backgroundColor: '#111111',
+        color: '#555555',
+        border: '1px solid #333333',
+        padding: '6px 12px',
+        borderRadius: '4px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'not-allowed',
+        textDecoration: 'none'
       }
     };
     
     return (
       <div className="mt-4">
-        <Pagination className="justify-content-center">
-          <Pagination.Prev
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-            style={paginationStyles.item}
-          />
-          
-          {pages.map(p => (
-            <Pagination.Item
-              key={p}
-              active={p === page}
-              onClick={() => setPage(p)}
-              style={p === page ? paginationStyles.active : paginationStyles.item}
-            >
-              {p}
-            </Pagination.Item>
-          ))}
-          
-          <Pagination.Next
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            style={paginationStyles.item}
-          />
-        </Pagination>
+        <div style={customPaginationStyle.container}>
+          <ul style={customPaginationStyle.ul}>
+            {/* Previous Button */}
+            <li>
+              {page > 1 ? (
+                <a 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); setPage(p => Math.max(1, p - 1)); }}
+                  style={customPaginationStyle.item}
+                >
+                  &laquo;
+                </a>
+              ) : (
+                <span style={customPaginationStyle.disabledItem}>&laquo;</span>
+              )}
+            </li>
+            
+            {/* Page Numbers */}
+            {pages.map(p => (
+              <li key={p}>
+                <a 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); setPage(p); }}
+                  style={p === page ? customPaginationStyle.activeItem : customPaginationStyle.item}
+                >
+                  {p}
+                </a>
+              </li>
+            ))}
+            
+            {/* Next Button */}
+            <li>
+              {page < totalPages ? (
+                <a 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); setPage(p => Math.min(totalPages, p + 1)); }}
+                  style={customPaginationStyle.item}
+                >
+                  &raquo;
+                </a>
+              ) : (
+                <span style={customPaginationStyle.disabledItem}>&raquo;</span>
+              )}
+            </li>
+          </ul>
+        </div>
         
         <div className="text-center mt-2" style={{ color: '#FFF4E2' }}>
           Page {page} of {totalPages}
