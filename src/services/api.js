@@ -71,8 +71,9 @@ export const requestService = {
       if (params.sort) queryParams.append('sort', params.sort);
       if (params.page) queryParams.append('page', params.page);
       
-      const url = `/requests${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-      return await api.get(url);
+      const url = `/requests/all${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await api.get(url);
+      return response.data;
     } catch (error) {
       console.error('Error in getAllRequests:', error);
       throw error;
